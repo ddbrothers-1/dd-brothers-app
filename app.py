@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session
 import sqlite3, os
 from contextlib import closing
@@ -7,7 +6,6 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from reportlab.lib.utils import ImageReader
 
 # ---------- Config ----------
 APP_TITLE = "DD Brothers — Transport Manager"
@@ -83,7 +81,7 @@ def currency(v):
 # ---------- Auth ----------
 @app.before_request
 def require_login():
-    allowed = ['login', 'static', 'download_report']
+    allowed = ['login', 'static', 'download_report', 'health']
     if request.endpoint in allowed or (request.path or "").startswith('/static'):
         return
     if not session.get('logged_in'):
@@ -109,7 +107,12 @@ def logout():
     flash("Logged out", "info")
     return redirect(url_for("login"))
 
-# ---------- PDF Helpers (no center watermark) ----------
+# ---------- Health (for UptimeRobot) ----------
+@app.route("/health")
+def health():
+    return "ok", 200
+
+# ---------- PDF Helpers (no center logo) ----------
 def draw_footer(c):
     c.setFont("Helvetica", 8)
     c.setFillColorRGB(0.40,0.40,0.40)
