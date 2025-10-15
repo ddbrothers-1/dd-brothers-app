@@ -1,0 +1,20 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:480px; margin:auto;">
+  <h1>Login</h1>
+  <form method="post">
+    <div>
+      <label>Username</label>
+      <input name="username" value="{{ username_prefill }}" required>
+    </div>
+    <div style="margin-top:8px;">
+      <label>Password</label>
+      <input type="password" name="password" required>
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn">Login</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
