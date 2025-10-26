@@ -1,80 +1,28 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>HST Report - DD Brothers</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <style>
-        .table-scroll {flex:1;min-height:0;overflow-y:auto;}
-        .no-data {text-align:center;color:#9ca3af;padding:24px;font-size:14px;}
-    </style>
-</head>
-<body>
-<div class="layout">
-    <aside class="sidebar">
-        <div class="logo">
-            DD BROTHERS<br>TRANSPORT
-        </div>
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>HST Collected (13%)</h2>
+  <table class="table">
+    <thead>
+      <tr><th>Date</th><th>Description</th><th>Amount (with HST)</th><th>HST Part</th></tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{r.entry_date}}</td>
+        <td>{{r.description}}</td>
+        <td>${{ '%.2f'|format(r.amount) }}</td>
+        <td>${{ '%.2f'|format(r.hst_component or 0) }}</td>
+      </tr>
+    {% endfor %}
+    {% if rows|length == 0 %}
+      <tr><td colspan="4" class="empty">No HST entries found.</td></tr>
+    {% endif %}
+    </tbody>
+  </table>
 
-        <a class="navlink" href="{{ url_for('home') }}">Home</a>
-        <a class="navlink" href="{{ url_for('expense_income') }}">Expense / Income</a>
-        <a class="navlink" href="{{ url_for('trucks') }}">Trucks</a>
-        <a class="navlink" href="{{ url_for('drivers') }}">Drivers</a>
-        <a class="navlink" href="{{ url_for('monthly_reports') }}">Monthly Reports</a>
-        <a class="navlink" href="{{ url_for('driver_pay') }}">Driver Pay</a>
-        <a class="navlink active" href="{{ url_for('hst') }}">HST</a>
-        <a class="navlink" href="{{ url_for('logout') }}">Logout</a>
-    </aside>
-
-    <main class="main-area">
-        <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;">
-            <h2>HST Report</h2>
-            <p class="subtext">Only “With HST” expenses. HST is calculated from that amount (13%).</p>
-
-            <div class="table-wrap" style="flex:1;min-height:0;display:flex;flex-direction:column;">
-                <div class="table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Truck</th>
-                                <th>Driver</th>
-                                <th>Description</th>
-                                <th class="right">Amount (With HST)</th>
-                                <th class="right">HST (13%)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in rows %}
-                            <tr>
-                                <td>{{ row.date }}</td>
-                                <td>{{ row.truck }}</td>
-                                <td>{{ row.driver }}</td>
-                                <td>{{ row.desc }}</td>
-                                <td class="right">${{ "%.2f"|format(row.amount_with_hst) }}</td>
-                                <td class="right">${{ "%.2f"|format(row.hst_only) }}</td>
-                            </tr>
-                            {% endfor %}
-
-                            {% if rows|length == 0 %}
-                            <tr>
-                                <td colspan="6" class="no-data">
-                                    No HST entries yet.
-                                </td>
-                            </tr>
-                            {% endif %}
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="5" class="right">HST Grand Total:</td>
-                                <td class="right">${{ "%.2f"|format(total_hst) }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-
-        </div>
-    </main>
+  <div class="summary-grid">
+    <div><strong>Grand Total HST:</strong> ${{ '%.2f'|format(total_hst) }}</div>
+  </div>
 </div>
-</body>
-</html>
+{% endblock %}

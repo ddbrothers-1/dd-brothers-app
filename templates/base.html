@@ -1,54 +1,55 @@
-
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ title }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  </head>
-  <body>
-    <div class="layout">
-      <aside class="sidebar">
-        <div class="logo">
-          <img src="{{ url_for('static', filename='dd_logo.png') }}" alt="DD Brothers">
-          <div class="title">DD Brothers<span>Transport Manager</span></div>
-        </div>
-        <nav class="nav">
-          <a href="{{ url_for('home') }}">🏠 Home</a>
-          <a href="{{ url_for('expense_income') }}">💳 Expense / Income</a>
-          <a href="{{ url_for('trucks') }}">🚚 Trucks</a>
-          <a href="{{ url_for('drivers') }}">🧑‍✈️ Drivers</a>
-          <a href="{{ url_for('monthly_reports') }}">🗓️ Monthly Reports</a>
-          <a href="{{ url_for('driver_pay') }}">🧾 Driver Pay</a>
-        </nav>
-        {% if session.get("username") %}
-          <div style="margin-top:14px; color:#cbd5e1; font-weight:700;">
-            Logged in as:<br><span style="color:#fff;">{{ session.get("username") }}</span>
-            <a href="{{ url_for('logout') }}" style="display:block; margin-top:6px; color:#fff; opacity:0.9; text-decoration:underline;">Logout</a>
-          </div>
-        {% endif %}
-        <div class="footer-note">Server: 127.0.0.1:5000</div>
-      </aside>
-      <main class="main">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for cat, msg in messages %}
-              <div class="card" style="background:#ecfccb; color:#14532d;">{{ msg }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-        {% block content %}{% endblock %}
-      </main>
+<head>
+  <meta charset="utf-8">
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo-block">
+      <img src="{{ url_for('static','dd_logo.png') }}" class="logo-img" alt="DD Brothers Logo">
+      <div class="brand-text">
+        <div class="brand-line1">DD BROTHERS</div>
+        <div class="brand-line2">TRANSPORT</div>
+      </div>
     </div>
-    <script>
-      function openDatePicker(id){ var el=document.getElementById(id); if(el && el.showPicker){ el.showPicker(); } }
-      function askDeletePassword(form, msg){
-        var pwd = prompt(msg + "\nEnter deletion password:");
-        if(!pwd){ return false; }
-        var inp = document.createElement('input'); inp.type='hidden'; inp.name='delete_password'; inp.value=pwd; form.appendChild(inp);
-        return true;
-      }
-    </script>
-  </body>
+
+    <div class="side-section">
+      <div class="side-user">
+        {% if session.get('logged_in') %}
+          Logged in as:<br>DD brothers
+        {% endif %}
+      </div>
+      <ul class="nav-list">
+        <li><a href="{{ url_for('home') }}">Home</a></li>
+        <li><a href="{{ url_for('expense_income') }}">Expense / Income</a></li>
+        <li><a href="{{ url_for('trucks') }}">Trucks</a></li>
+        <li><a href="{{ url_for('drivers') }}">Drivers</a></li>
+        <li><a href="{{ url_for('monthly_reports') }}">Monthly Reports</a></li>
+        <li><a href="{{ url_for('driver_pay') }}">Driver Pay</a></li>
+        <li><a href="{{ url_for('hst') }}">HST</a></li>
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+
+      <div class="server-info">
+        Server: 127.0.0.1:5000
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat,msg in messages %}
+        <div class="flash flash-{{cat}}">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
 </html>

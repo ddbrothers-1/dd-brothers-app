@@ -1,92 +1,58 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Edit Entry - DD Brothers</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-<div class="layout">
-    
-    <aside class="sidebar">
-        <div class="logo">
-            DD BROTHERS<br>TRANSPORT
-        </div>
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Edit Entry</h2>
+  <form method="post" class="grid-form">
+    <div>
+      <label>Date</label>
+      <input type="date" name="entry_date" value="{{entry.entry_date}}" required>
+    </div>
+    <div>
+      <label>Type</label>
+      <select name="is_income">
+        <option value="1" {% if entry.is_income==1 %}selected{% endif %}>Income</option>
+        <option value="0" {% if entry.is_income==0 %}selected{% endif %}>Expense</option>
+      </select>
+    </div>
+    <div>
+      <label>Category</label>
+      <input type="text" name="category" value="{{entry.category}}">
+    </div>
+    <div>
+      <label>Amount ($)</label>
+      <input type="number" step="0.01" name="amount" value="{{entry.amount}}" required>
+    </div>
+    <div>
+      <label>HST Included?</label>
+      <select name="hst_included">
+        <option value="1" {% if entry.hst_included==1 %}selected{% endif %}>With HST</option>
+        <option value="0" {% if entry.hst_included==0 %}selected{% endif %}>Without HST</option>
+      </select>
+    </div>
+    <div class="full">
+      <label>Description</label>
+      <textarea name="description" rows="2" required>{{entry.description}}</textarea>
+    </div>
+    <div>
+      <label>Truck</label>
+      <select name="truck_id" required>
+        {% for t in trucks %}
+        <option value="{{t.id}}" {% if entry.truck_id==t.id %}selected{% endif %}>{{t.name}}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Driver</label>
+      <select name="driver_id" required>
+        {% for d in drivers %}
+        <option value="{{d.id}}" {% if entry.driver_id==d.id %}selected{% endif %}>{{d.name}}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-        <a class="navlink" href="{{ url_for('home') }}">Home</a>
-        <a class="navlink" href="{{ url_for('expense_income') }}">Expense / Income</a>
-        <a class="navlink" href="{{ url_for('trucks') }}">Trucks</a>
-        <a class="navlink" href="{{ url_for('drivers') }}">Drivers</a>
-        <a class="navlink" href="{{ url_for('monthly_reports') }}">Monthly Reports</a>
-        <a class="navlink" href="{{ url_for('driver_pay') }}">Driver Pay</a>
-        <a class="navlink" href="{{ url_for('hst') }}">HST</a>
-        <a class="navlink" href="{{ url_for('logout') }}">Logout</a>
-    </aside>
-
-    <main class="main-area">
-        <div class="card">
-            <h2>Edit Entry</h2>
-            <form method="POST">
-                <div class="form-row">
-                    <div>
-                        <label>Date</label>
-                        <input type="date" name="entry_date" value="{{ entry.entry_date }}" required>
-                    </div>
-                    <div>
-                        <label>Type</label>
-                        <select name="is_income">
-                            <option value="1" {% if entry.is_income==1 %}selected{% endif %}>Income</option>
-                            <option value="0" {% if entry.is_income==0 %}selected{% endif %}>Expense</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Category</label>
-                        <input name="category" value="{{ entry.category }}">
-                    </div>
-                    <div>
-                        <label>Amount</label>
-                        <input type="number" step="0.01" name="amount" value="{{ entry.amount }}" required>
-                    </div>
-                    <div>
-                        <label>HST</label>
-                        <select name="hst_included">
-                            <option value="1" {% if entry.hst_included==1 %}selected{% endif %}>With HST</option>
-                            <option value="0" {% if entry.hst_included==0 %}selected{% endif %}>Without HST</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div>
-                        <label>Truck</label>
-                        <select name="truck_id" required>
-                            {% for t in trucks %}
-                            <option value="{{ t.id }}" {% if entry.truck_id==t.id %}selected{% endif %}>{{ t.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label>Driver</label>
-                        <select name="driver_id" required>
-                            {% for d in drivers %}
-                            <option value="{{ d.id }}" {% if entry.driver_id==d.id %}selected{% endif %}>{{ d.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div style="flex:1;min-width:260px;">
-                        <label>Description</label>
-                        <textarea name="description" rows="2" style="width:100%;" required>{{ entry.description }}</textarea>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <button class="btn" type="submit">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </main>
+    <div class="full">
+      <button class="btn-primary" type="submit">Save Changes</button>
+    </div>
+  </form>
 </div>
-</body>
-</html>
+{% endblock %}

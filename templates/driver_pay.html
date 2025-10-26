@@ -1,99 +1,53 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Driver Pay - DD Brothers</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-<div class="layout">
-    
-    <aside class="sidebar">
-        <div class="logo">
-            DD BROTHERS<br>TRANSPORT
-        </div>
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Driver Pay</h2>
+  <form method="post" class="grid-form">
+    <div>
+      <label>Driver</label>
+      <select name="driver_id">
+        <option value="all">All Drivers</option>
+        {% for d in drivers %}
+        <option value="{{d.id}}">{{d.name}}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>From</label>
+      <input type="date" name="date_from" required>
+    </div>
+    <div>
+      <label>To</label>
+      <input type="date" name="date_to" required>
+    </div>
+    <div class="full">
+      <button class="btn-primary" type="submit">Generate / Download PDF</button>
+    </div>
+  </form>
 
-        <a class="navlink" href="{{ url_for('home') }}">Home</a>
-        <a class="navlink" href="{{ url_for('expense_income') }}">Expense / Income</a>
-        <a class="navlink" href="{{ url_for('trucks') }}">Trucks</a>
-        <a class="navlink" href="{{ url_for('drivers') }}">Drivers</a>
-        <a class="navlink" href="{{ url_for('monthly_reports') }}">Monthly Reports</a>
-        <a class="navlink" href="{{ url_for('driver_pay') }}">Driver Pay</a>
-        <a class="navlink" href="{{ url_for('hst') }}">HST</a>
-        <a class="navlink" href="{{ url_for('logout') }}">Logout</a>
-    </aside>
+  <table class="table">
+    <thead>
+      <tr><th>Date</th><th>Driver</th><th>Truck</th><th>Amount</th></tr>
+    </thead>
+    <tbody>
+      {% for r in items %}
+      <tr>
+        <td>{{r.entry_date}}</td>
+        <td>{{r.driver_name}}</td>
+        <td>{{r.truck_name}}</td>
+        <td>${{ '%.2f'|format(r.amount) }}</td>
+      </tr>
+      {% endfor %}
+      {% if items|length == 0 %}
+      <tr><td colspan="4" class="empty">No data.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
 
-    <main class="main-area">
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for cat,msg in messages %}
-                <div class="flash-msg">{{ msg }}</div>
-            {% endfor %}
-        {% endif %}
-        {% endwith %}
-
-        <div class="card">
-            <h2>Driver Pay Report</h2>
-            <form method="POST" class="form-row">
-                <div>
-                    <label>Driver</label>
-                    <select name="driver_id">
-                        <option value="all">All Drivers</option>
-                        {% for d in drivers %}
-                        <option value="{{ d.id }}">{{ d.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label>From Date</label>
-                    <input type="date" name="date_from" required>
-                </div>
-                <div>
-                    <label>To Date</label>
-                    <input type="date" name="date_to" required>
-                </div>
-                <div style="display:flex;align-items:flex-end;">
-                    <button class="btn" type="submit">Generate</button>
-                </div>
-            </form>
-
-            {% if pdf_path %}
-            <div style="margin-top:16px;">
-                <a class="btn" href="{{ url_for('download_report', fname=pdf_path.split('/')[-1]) }}">Download PDF</a>
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="card">
-            <h2>Driver Pay Items</h2>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Driver</th>
-                            <th>Truck</th>
-                            <th class="right">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in items %}
-                        <tr>
-                            <td>{{ row.entry_date }}</td>
-                            <td>{{ row.driver_name or "-" }}</td>
-                            <td>{{ row.truck_name or "-" }}</td>
-                            <td class="right">${{ '%.2f'|format(row.amount) }}</td>
-                        </tr>
-                        {% endfor %}
-                        {% if items|length == 0 %}
-                        <tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:20px;">No data available.</td></tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </main>
+  {% if pdf_path %}
+  <div class="pdf-download">
+    <a class="btn-primary" href="{{ url_for('download_report', fname=pdf_path.split('/')[-1]) }}">Download Driver Pay PDF</a>
+  </div>
+  {% endif %}
 </div>
-</body>
-</html>
+{% endblock %}
