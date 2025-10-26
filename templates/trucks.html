@@ -1,37 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trucks - DD Brothers</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="layout">
+    
+    <aside class="sidebar">
+        <div class="logo">
+            DD BROTHERS<br>TRANSPORT
+        </div>
 
-{% extends "base.html" %}
-{% block content %}
-<div class="card">
-  <h1>Trucks</h1>
-  <form method="post" class="form-row">
-    <div class="col">
-      <label>Truck Name/Number</label>
-      <input name="name" placeholder="e.g., Truck 101" required>
-    </div>
-    <button class="btn">Add Truck</button>
-  </form>
+        <a class="navlink" href="{{ url_for('home') }}">Home</a>
+        <a class="navlink" href="{{ url_for('expense_income') }}">Expense / Income</a>
+        <a class="navlink" href="{{ url_for('trucks') }}">Trucks</a>
+        <a class="navlink" href="{{ url_for('drivers') }}">Drivers</a>
+        <a class="navlink" href="{{ url_for('monthly_reports') }}">Monthly Reports</a>
+        <a class="navlink" href="{{ url_for('driver_pay') }}">Driver Pay</a>
+        <a class="navlink" href="{{ url_for('hst') }}">HST</a>
+        <a class="navlink" href="{{ url_for('logout') }}">Logout</a>
+    </aside>
+
+    <main class="main-area">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat,msg in messages %}
+                <div class="flash-msg">{{ msg }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <h2>Add Truck</h2>
+            <form method="POST" class="form-row">
+                <div>
+                    <label>Truck Name / Number</label>
+                    <input name="name" placeholder="e.g. 101" required>
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                    <button class="btn" type="submit">Add Truck</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>All Trucks</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Truck</th>
+                            <th style="width:200px;">Edit</th>
+                            <th style="width:200px;">Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in items %}
+                        <tr>
+                            <td>{{ t.name }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('edit_truck', id=t.id) }}" class="form-row" style="gap:6px;">
+                                    <input name="name" value="{{ t.name }}" style="min-width:80px;">
+                                    <button class="btn small" type="submit">Save</button>
+                                </form>
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('delete_truck', id=t.id) }}" onsubmit="return confirm('Delete truck?')" class="form-row" style="gap:6px;">
+                                    <input type="password" name="delete_password" placeholder="1322420" style="min-width:80px;">
+                                    <button class="btn small" type="submit">X</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if items|length == 0 %}
+                        <tr><td colspan="3" style="text-align:center;color:#9ca3af;padding:20px;">No trucks yet.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
 </div>
-<div class="card">
-  <h2>List</h2>
-  <table class="table">
-    <thead><tr><th>Name</th><th>Actions</th></tr></thead>
-    <tbody>
-      {% for t in items %}
-      <tr>
-        <td>
-          <form method="post" action="{{ url_for('edit_truck', id=t.id) }}" class="form-row">
-            <div class="col"><input name="name" value="{{ t.name }}" required></div>
-            <div class="actions"><button class="btn secondary">Save</button></div>
-          </form>
-        </td>
-        <td>
-          <form method="post" action="{{ url_for('delete_truck', id=t.id) }}" onsubmit="return askDeletePassword(this, 'Delete this truck?')">
-            <button class="btn danger">Delete</button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% endblock %}
+</body>
+</html>

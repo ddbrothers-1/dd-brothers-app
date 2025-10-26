@@ -7,7 +7,6 @@ from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 
-# ---------- Config ----------
 APP_TITLE = "DD Brothers — Transport Manager"
 BASE_DIR = os.path.dirname(__file__)
 DB_PATH = os.path.join(BASE_DIR, os.getenv("DB_PATH", "dd_manager.db"))
@@ -27,7 +26,6 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dd-secret")
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
-# ---------- DB ----------
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -43,7 +41,7 @@ def init_db():
             )
         """)
         c.execute("""
-            CREATE TABLE IF NOTISTS drivers (
+            CREATE TABLE IF NOT EXISTS drivers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL
             )
@@ -66,7 +64,6 @@ def init_db():
         db.commit()
 
 def amount_with_hst(amount, hst_included):
-    # for expenses: if "without hst", we add 13% when calculating totals
     return amount if hst_included else round(amount * 1.13, 2)
 
 def totals(where="", params=()):
@@ -94,10 +91,8 @@ def currency(v):
     except Exception:
         return v
 
-# ---------- AUTH ----------
 @app.before_request
 def require_login():
-    # allow these without login
     allowed = ['login', 'static', 'download_report', 'health', 'hst']
     if request.endpoint in allowed or (request.path or "").startswith('/static'):
         return
@@ -124,25 +119,17 @@ def logout():
     flash("Logged out", "info")
     return redirect(url_for("login"))
 
-# ---------- Health (for UptimeRobot / keep-awake) ----------
 @app.route("/health")
 def health():
     return "ok", 200
 
-# ---------- HST helper + page ----------
 def calc_hst_component(amount_including_hst):
-    """
-    If amount=500 and that amount was 'with HST':
-    Base before tax = 500 / 1.13
-    HST part = 500 - base
-    """
     base = amount_including_hst / 1.13
     hst_only = amount_including_hst - base
     return round(hst_only, 2)
 
 @app.route("/hst", methods=["GET"])
 def hst():
-    # pull only EXPENSE rows that were marked "with HST"
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
@@ -163,10 +150,9 @@ def hst():
     total_hst = 0.0
 
     for r in rows:
-        full_amt = float(r["amount"])  # this is the amount user entered
+        full_amt = float(r["amount"])
         hst_part = calc_hst_component(full_amt)
         total_hst += hst_part
-
         data.append({
             "date": r["entry_date"],
             "truck": r["truck_name"] or "-",
@@ -185,7 +171,6 @@ def hst():
         total_hst=total_hst
     )
 
-# ---------- PDF Helpers (no center logo) ----------
 def draw_footer(c):
     c.setFont("Helvetica", 8)
     c.setFillColorRGB(0.40,0.40,0.40)
@@ -225,7 +210,6 @@ def header_pdf(c, title):
 
     draw_footer(c)
 
-# ---------- Pages ----------
 @app.route("/")
 def home():
     conn = get_db()
@@ -301,7 +285,6 @@ def expense_income():
         flash("Saved!", "success")
         return redirect(url_for("expense_income"))
 
-    # GET mode:
     cur.execute("SELECT * FROM trucks ORDER BY name")
     trucks = cur.fetchall()
     cur.execute("SELECT * FROM drivers ORDER BY name")
@@ -405,7 +388,6 @@ def edit_entry(id):
         flash("Entry updated.", "success")
         return redirect(url_for("expense_income"))
 
-    # GET mode
     cur.execute("SELECT * FROM entries WHERE id=?", (id,))
     entry = cur.fetchone()
     cur.execute("SELECT * FROM trucks ORDER BY name")
@@ -420,7 +402,6 @@ def edit_entry(id):
                            trucks=trucks,
                            drivers=drivers)
 
-# ---------- Trucks ----------
 @app.route("/trucks", methods=["GET","POST"])
 def trucks():
     conn = get_db()
@@ -466,7 +447,6 @@ def edit_truck(id):
     flash("Truck updated.", "success")
     return redirect(url_for("trucks"))
 
-# ---------- Drivers ----------
 @app.route("/drivers", methods=["GET","POST"])
 def drivers():
     conn = get_db()
@@ -512,7 +492,6 @@ def edit_driver(id):
     flash("Driver updated.", "success")
     return redirect(url_for("drivers"))
 
-# ---------- Monthly Reports ----------
 @app.route("/monthly_reports", methods=["GET","POST"])
 def monthly_reports():
     conn = get_db()
@@ -520,6 +499,71 @@ def monthly_reports():
     cur.execute("SELECT * FROM trucks ORDER BY name")
     trucks = cur.fetchall()
     pdf_path = None
+
+    def write_monthly_rows(c, title, items):
+        y = 9.1*inch
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(0.8*inch, y, "Date")
+        c.drawString(1.6*inch, y, "Type")
+        c.drawString(2.5*inch, y, "Category")
+        c.drawString(4.0*inch, y, "Driver")
+        c.drawRightString(7.7*inch, y, "Amount")
+        y -= 0.15*inch
+        c.setFont("Helvetica", 10)
+
+        total_inc = 0.0
+        total_exp = 0.0
+
+        for r in items:
+            if y < 1.1*inch:
+                c.showPage()
+                header_pdf(c, title)
+                y = 9.1*inch
+                c.setFont("Helvetica-Bold", 10)
+                c.drawString(0.8*inch, y, "Date")
+                c.drawString(1.6*inch, y, "Type")
+                c.drawString(2.5*inch, y, "Category")
+                c.drawString(4.0*inch, y, "Driver")
+                c.drawRightString(7.7*inch, y, "Amount")
+                y -= 0.15*inch
+                c.setFont("Helvetica", 10)
+
+            amt = (
+                r["amount"]
+                if r["is_income"] == 1
+                else amount_with_hst(r["amount"], r["hst_included"] == 1)
+            )
+
+            c.drawString(0.8*inch, y, r["entry_date"])
+            c.drawString(1.6*inch, y, "Income" if r["is_income"] == 1 else "Expense")
+            c.drawString(2.5*inch, y, r["category"] or "-")
+            c.drawString(4.0*inch, y, r["driver_name"] or "-")
+            c.drawRightString(7.7*inch, y, f"${amt:,.2f}")
+
+            if r["is_income"] == 1:
+                total_inc += amt
+            else:
+                total_exp += amt
+
+            y -= 0.15*inch
+
+        y -= 0.1*inch
+        c.setFont("Helvetica-Bold", 11)
+        c.drawRightString(6.9*inch, y, "Total Income:")
+        c.drawRightString(7.7*inch, y, f"${total_inc:,.2f}")
+        y -= 0.18*inch
+
+        c.drawRightString(6.9*inch, y, "Total Expenses:")
+        c.drawRightString(7.7*inch, y, f"${total_exp:,.2f}")
+        y -= 0.18*inch
+
+        net = round(total_inc - total_exp, 2)
+        c.setFillColor(colors.green if net >= 0 else colors.red)
+        c.drawRightString(6.9*inch, y, "Profit/Loss:")
+        c.drawRightString(7.7*inch, y, f"${net:,.2f}")
+        c.setFillColor(colors.black)
+        c.showPage()
+        return total_inc, total_exp, net
 
     if request.method == "POST":
         truck_id = request.form.get("truck_id")
@@ -564,96 +608,30 @@ def monthly_reports():
 
             for (tid, tname), items in groups.items():
                 header_pdf(c, f"Monthly Report: {start.strftime('%B %Y')} — {tname}")
-                y = 9.1*inch
-                c.setFont("Helvetica-Bold", 10)
-                c.drawString(0.8*inch, y, "Date")
-                c.drawString(1.6*inch, y, "Type")
-                c.drawString(2.5*inch, y, "Category")
-                c.drawString(4.0*inch, y, "Driver")
-                c.drawRightString(7.7*inch, y, "Amount")
-                y -= 0.15*inch
-                c.setFont("Helvetica", 10)
-
-                total_inc = 0.0
-                total_exp = 0.0
-
-                for r in items:
-                    if y < 1.1*inch:
-                        c.showPage()
-                        header_pdf(c, f"Monthly Report: {start.strftime('%B %Y')} — {tname}")
-                        y = 9.1*inch
-                        c.setFont("Helvetica-Bold", 10)
-                        c.drawString(0.8*inch, y, "Date")
-                        c.drawString(1.6*inch, y, "Type")
-                        c.drawString(2.5*inch, y, "Category")
-                        c.drawString(4.0*inch, y, "Driver")
-                        c.drawRightString(7.7*inch, y, "Amount")
-                        y -= 0.15*inch
-                        c.setFont("Helvetica", 10)
-
-                    amt = (
-                        r["amount"]
-                        if r["is_income"] == 1
-                        else amount_with_hst(r["amount"], r["hst_included"] == 1)
-                    )
-
-                    c.drawString(0.8*inch, y, r["entry_date"])
-                    c.drawString(1.6*inch, y, "Income" if r["is_income"] == 1 else "Expense")
-                    c.drawString(2.5*inch, y, r["category"] or "-")
-                    c.drawString(4.0*inch, y, r["driver_name"] or "-")
-                    c.drawRightString(7.7*inch, y, f"${amt:,.2f}")
-
-                    if r["is_income"] == 1:
-                        total_inc += amt
-                    else:
-                        total_exp += amt
-
-                    y -= 0.15*inch
-
-                y -= 0.1*inch
-                c.setFont("Helvetica-Bold", 11)
-                c.drawRightString(6.9*inch, y, "Total Income:")
-                c.drawRightString(7.7*inch, y, f"${total_inc:,.2f}")
-
-                y -= 0.18*inch
-                c.drawRightString(6.9*inch, y, "Total Expenses:")
-                c.drawRightString(7.7*inch, y, f"${total_exp:,.2f}")
-
-                y -= 0.18*inch
-                net = round(total_inc - total_exp, 2)
-                c.setFillColor(colors.green if net >= 0 else colors.red)
-                c.drawRightString(6.9*inch, y, "Profit/Loss:")
-                c.drawRightString(7.7*inch, y, f"${net:,.2f}")
-                c.setFillColor(colors.black)
-                c.showPage()
+                write_monthly_rows(c, f"Monthly Report: {start.strftime('%B %Y')} — {tname}", items)
 
             inc, exp, prof = totals(
                 "date(entry_date)>=? AND date(entry_date)<?",
                 (str(start), str(end))
             )
-
             header_pdf(c, f"Monthly Summary: {start.strftime('%B %Y')} — All Trucks")
             y = 9.1*inch
             c.setFont("Helvetica-Bold", 11)
             c.drawRightString(6.9*inch, y, "Total Income:")
             c.drawRightString(7.7*inch, y, f"${inc:,.2f}")
-
             y -= 0.18*inch
             c.drawRightString(6.9*inch, y, "Total Expenses:")
             c.drawRightString(7.7*inch, y, f"${exp:,.2f}")
-
             y -= 0.18*inch
             c.setFillColor(colors.green if prof >= 0 else colors.red)
             c.drawRightString(6.9*inch, y, "Profit/Loss:")
             c.drawRightString(7.7*inch, y, f"${prof:,.2f}")
             c.setFillColor(colors.black)
-
             c.showPage()
             c.save()
             pdf_path = pdf_full
 
         else:
-            # single truck
             cur.execute("""
                 SELECT e.*, t.name AS truck_name, d.name AS driver_name
                 FROM entries e
@@ -672,70 +650,13 @@ def monthly_reports():
                                        trucks=trucks,
                                        pdf_path=None)
 
-            inc, exp, prof = totals(
-                "date(entry_date)>=? AND date(entry_date)<? AND truck_id=?",
-                (str(start), str(end), truck_id)
-            )
-
             filename = f"Monthly_Report_{start.strftime('%Y_%m')}_Truck_{rows[0]['truck_name']}.pdf"
             pdf_full = os.path.join(REPORTS_DIR, filename)
             os.makedirs(os.path.dirname(pdf_full), exist_ok=True)
             c = canvas.Canvas(pdf_full, pagesize=letter)
 
             header_pdf(c, f"Monthly Report: {start.strftime('%B %Y')} — {rows[0]['truck_name']}")
-            y = 9.1*inch
-            c.setFont("Helvetica-Bold", 10)
-            c.drawString(0.8*inch, y, "Date")
-            c.drawString(1.6*inch, y, "Type")
-            c.drawString(2.5*inch, y, "Category")
-            c.drawString(4.0*inch, y, "Driver")
-            c.drawRightString(7.7*inch, y, "Amount")
-            y -= 0.15*inch
-            c.setFont("Helvetica", 10)
-
-            for r in rows:
-                if y < 1.1*inch:
-                    c.showPage()
-                    header_pdf(c, f"Monthly Report: {start.strftime('%B %Y')} — {rows[0]['truck_name']}")
-                    y = 9.1*inch
-                    c.setFont("Helvetica-Bold", 10)
-                    c.drawString(0.8*inch, y, "Date")
-                    c.drawString(1.6*inch, y, "Type")
-                    c.drawString(2.5*inch, y, "Category")
-                    c.drawString(4.0*inch, y, "Driver")
-                    c.drawRightString(7.7*inch, y, "Amount")
-                    y -= 0.15*inch
-                    c.setFont("Helvetica", 10)
-
-                amt = (
-                    r["amount"]
-                    if r["is_income"] == 1
-                    else amount_with_hst(r["amount"], r["hst_included"] == 1)
-                )
-
-                c.drawString(0.8*inch, y, r["entry_date"])
-                c.drawString(1.6*inch, y, "Income" if r["is_income"] == 1 else "Expense")
-                c.drawString(2.5*inch, y, r["category"] or "-")
-                c.drawString(4.0*inch, y, r["driver_name"] or "-")
-                c.drawRightString(7.7*inch, y, f"${amt:,.2f}")
-                y -= 0.15*inch
-
-            y -= 0.1*inch
-            c.setFont("Helvetica-Bold", 11)
-            c.drawRightString(6.9*inch, y, "Total Income:")
-            c.drawRightString(7.7*inch, y, f"${inc:,.2f}")
-
-            y -= 0.18*inch
-            c.drawRightString(6.9*inch, y, "Total Expenses:")
-            c.drawRightString(7.7*inch, y, f"${exp:,.2f}")
-
-            y -= 0.18*inch
-            c.setFillColor(colors.green if (inc - exp) >= 0 else colors.red)
-            c.drawRightString(6.9*inch, y, "Profit/Loss:")
-            c.drawRightString(7.7*inch, y, f"${(inc - exp):,.2f}")
-            c.setFillColor(colors.black)
-
-            c.showPage()
+            write_monthly_rows(c, f"Monthly Report: {start.strftime('%B %Y')} — {rows[0]['truck_name']}", rows)
             c.save()
             pdf_path = pdf_full
 
@@ -745,7 +666,6 @@ def monthly_reports():
                            trucks=trucks,
                            pdf_path=pdf_path)
 
-# ---------- Driver Pay ----------
 @app.route("/driver_pay", methods=["GET","POST"])
 def driver_pay():
     conn = get_db()
@@ -853,7 +773,6 @@ def driver_pay():
                            items=items,
                            pdf_path=pdf_path)
 
-# ---------- Download endpoint for generated PDFs ----------
 @app.route("/download_report")
 def download_report():
     fname = request.args.get("fname", "")
@@ -871,7 +790,6 @@ def download_report():
 
     return send_file(path, as_attachment=True)
 
-# ---------- Boot ----------
 def _ensure_dirs():
     os.makedirs(REPORTS_DIR, exist_ok=True)
 

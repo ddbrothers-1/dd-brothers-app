@@ -1,185 +1,177 @@
-
-{% extends "base.html" %}
-{% block content %}
-
-<div class="card">
-  <h1>Add New Entry</h1>
-
-  <div class="form-row">
-    <div class="col">
-      <label>Mode</label>
-      <select id="form_type">
-        <option value="income">Income</option>
-        <option value="expense">Expense</option>
-      </select>
-    </div>
-  </div>
-
-  <form method="post" id="entryForm">
-    <input type="hidden" name="form_type" id="form_type_hidden" value="income">
-
-    <div class="grid-3" style="margin-top:10px;">
-      <div>
-        <label>Date</label>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <input type="date" name="entry_date" id="entry_date" required onclick="if(this.showPicker){this.showPicker()}" onfocus="if(this.showPicker){this.showPicker()}">
-          <button type="button" class="btn secondary" onclick="if(document.getElementById('entry_date').showPicker){document.getElementById('entry_date').showPicker()}">📅</button>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expense / Income - DD Brothers</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="layout">
+    
+    <aside class="sidebar">
+        <div class="logo">
+            DD BROTHERS<br>TRANSPORT
         </div>
-      </div>
-      <div>
-        <label>Truck</label>
-        <select name="truck_id" required>
-          <option value="">—</option>
-          {% for t in trucks %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
-        </select>
-      </div>
-      <div>
-        <label>Driver</label>
-        <select name="driver_id" required>
-          <option value="">—</option>
-          {% for d in drivers %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
-        </select>
-      </div>
-    </div>
 
-    <!-- Income section -->
-    <div id="incomeFields" class="grid-3" style="margin-top:10px;">
-      <div>
-        <label>Income Amount ($)</label>
-        <input type="number" step="0.01" name="income_amount" id="income_amount">
-      </div>
-    </div>
+        <a class="navlink" href="{{ url_for('home') }}">Home</a>
+        <a class="navlink" href="{{ url_for('expense_income') }}">Expense / Income</a>
+        <a class="navlink" href="{{ url_for('trucks') }}">Trucks</a>
+        <a class="navlink" href="{{ url_for('drivers') }}">Drivers</a>
+        <a class="navlink" href="{{ url_for('monthly_reports') }}">Monthly Reports</a>
+        <a class="navlink" href="{{ url_for('driver_pay') }}">Driver Pay</a>
+        <a class="navlink" href="{{ url_for('hst') }}">HST</a>
+        <a class="navlink" href="{{ url_for('logout') }}">Logout</a>
+    </aside>
 
-    <!-- Expense section -->
-    <div id="expenseFields" class="grid-3" style="margin-top:10px; display:none;">
-      <div>
-        <label>Expense Type</label>
-        <select name="category" id="expense_category">
-          <option>Fuel</option>
-          <option>Driver Pay</option>
-          <option>Insurance</option>
-          <option>Parking</option>
-          <option>Other</option>
-        </select>
-      </div>
-      <div>
-        <label>Expense Amount ($)</label>
-        <input type="number" step="0.01" name="expense_amount" id="expense_amount">
-      </div>
-      <div>
-        <label>HST</label>
-        <select name="hst_option" id="hst_option">
-          <option value="with">Amount includes HST</option>
-          <option value="without">Amount is without HST (add 13%)</option>
-        </select>
-      </div>
-    </div>
+    <main class="main-area">
 
-    <!-- Shared description -->
-    <div class="grid-3" style="margin-top:10px;">
-      <div class="col" style="grid-column: span 3;">
-        <label>Description</label>
-        <input type="text" name="description" placeholder="e.g., Petro-Pass Mississauga" required>
-      </div>
-    </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat,msg in messages %}
+                <div class="flash-msg">{{ msg }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
 
-    <div style="margin-top:10px;"><button class="btn">Save Entry</button></div>
-  </form>
-</div>
+        <div class="card">
+            <h2>Add Income / Expense Entry</h2>
+            <form method="POST">
+                <div class="form-row">
+                    <div>
+                        <label>Type</label>
+                        <select name="form_type" required>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Date</label>
+                        <input type="date" name="entry_date" required>
+                    </div>
+                    <div>
+                        <label>Truck</label>
+                        <select name="truck_id" required>
+                            <option value="">Select Truck</option>
+                            {% for t in trucks %}
+                            <option value="{{ t.id }}">{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label>Driver</label>
+                        <select name="driver_id" required>
+                            <option value="">Select Driver</option>
+                            {% for d in drivers %}
+                            <option value="{{ d.id }}">{{ d.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
 
-<script>
-  const formType = document.getElementById('form_type');
-  const hiddenType = document.getElementById('form_type_hidden');
-  const incomeFields = document.getElementById('incomeFields');
-  const expenseFields = document.getElementById('expenseFields');
-  const incomeAmount = document.getElementById('income_amount');
-  const expenseAmount = document.getElementById('expense_amount');
+                <div class="form-row">
+                    <div>
+                        <label>Income Amount</label>
+                        <input type="number" step="0.01" name="income_amount" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label>Expense Amount</label>
+                        <input type="number" step="0.01" name="expense_amount" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label>Expense Category</label>
+                        <select name="category">
+                            <option>Fuel</option>
+                            <option>Driver Pay</option>
+                            <option>Insurance</option>
+                            <option>Parking</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>HST</label>
+                        <select name="hst_option">
+                            <option value="with">With HST</option>
+                            <option value="without">Without HST</option>
+                        </select>
+                    </div>
+                </div>
 
-  function syncForm(){
-    if (formType.value === 'income') {
-      incomeFields.style.display = 'grid';
-      expenseFields.style.display = 'none';
-      if (incomeAmount) incomeAmount.required = true;
-      if (expenseAmount) expenseAmount.required = false;
-    } else {
-      incomeFields.style.display = 'none';
-      expenseFields.style.display = 'grid';
-      if (incomeAmount) incomeAmount.required = false;
-      if (expenseAmount) expenseAmount.required = true;
-    }
-    hiddenType.value = formType.value;
-  }
-  formType.addEventListener('change', syncForm);
-  syncForm();
-</script>
-<div class="card">
-  <h2>Filter by Date</h2>
-  <form method="get" class="form-row">
-    <div class="col">
-      <label>From</label>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input type="date" name="from" id="from" onclick="if(this.showPicker){this.showPicker()}" onfocus="if(this.showPicker){this.showPicker()}">
-        <button type="button" class="btn secondary" onclick="openDatePicker('from')">📅</button>
-      </div>
-    </div>
-    <div class="col">
-      <label>To</label>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input type="date" name="to" id="to" onclick="if(this.showPicker){this.showPicker()}" onfocus="if(this.showPicker){this.showPicker()}">
-        <button type="button" class="btn secondary" onclick="openDatePicker('to')">📅</button>
-      </div>
-    </div>
-    <button class="btn">Apply</button>
-  </form>
-</div>
+                <div class="form-row">
+                    <div style="flex:1;min-width:260px;">
+                        <label>Description</label>
+                        <textarea name="description" rows="2" style="width:100%;" placeholder="details..." required></textarea>
+                    </div>
+                </div>
 
-<div class="card">
-  <h2>Entries (latest 200)</h2>
-  <table class="table">
-    <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Truck</th><th>Driver</th><th>Description</th><th style="text-align:right;">Amount</th><th>Actions</th></tr></thead>
-    <tbody>
-      {% if entries|length == 0 %}<tr><td colspan="8">No data available.</td></tr>{% endif %}
-      {% for e in entries %}
-      <tr>
-        <td>{{ e.entry_date }}</td>
-        <td>{{ 'Income' if e.is_income==1 else 'Expense' }}</td>
-        <td>{{ e.category }}</td>
-        <td>{{ e.truck_name or '-' }}</td>
-        <td>{{ e.driver_name or '-' }}</td>
-        <td>{{ e.description or '' }}</td>
-        <td style="text-align:right;">
-          {% if e.is_income==1 %}{{ e.amount|currency }}
-          {% else %}{% if e.hst_included==1 %}{{ e.amount|currency }}{% else %}{{ (e.amount*1.13)|round(2)|currency }}{% endif %}{% endif %}
-        </td>
-        <td>
-          <div class="actions">
-            <a class="btn secondary" href="{{ url_for('edit_entry', id=e.id) }}">Edit</a>
-            <form method="post" action="{{ url_for('delete_entry', id=e.id) }}" onsubmit="return askDeletePassword(this, 'Delete this entry?')">
-              <button class="btn danger">Delete</button>
+                <div class="form-row">
+                    <button class="btn" type="submit">Save Entry</button>
+                </div>
             </form>
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+        </div>
 
-<script>
-  const formType = document.getElementById('form_type');
-  const hiddenType = document.getElementById('form_type_hidden');
-  const incomeFields = document.getElementById('incomeFields');
-  const expenseFields = document.getElementById('expenseFields');
-  function syncForm(){
-    const expAmount = document.querySelector('#expenseFields input[name="expense_amount"]');
-    const incAmount = document.querySelector('#incomeFields input[name="income_amount"]');
-    if (formType.value === 'income') { if(incAmount){incAmount.required=true;} if(expAmount){expAmount.required=false;} }
-    else { if(incAmount){incAmount.required=false;} if(expAmount){expAmount.required=true;} }
-    hiddenType.value = formType.value;
-    incomeFields.style.display = formType.value === 'income' ? 'grid' : 'none';
-    expenseFields.style.display = formType.value === 'expense' ? 'grid' : 'none';
-  }
-  formType.addEventListener('change', syncForm);
-  syncForm();
-</script>
-{% endblock %}
+        <div class="card">
+            <h2>Filter by Date</h2>
+            <form method="GET" class="form-row">
+                <div>
+                    <label>From</label>
+                    <input type="date" name="from">
+                </div>
+                <div>
+                    <label>To</label>
+                    <input type="date" name="to">
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                    <button class="btn small" type="submit">Search</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Entries</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Truck</th>
+                            <th>Driver</th>
+                            <th>Description</th>
+                            <th class="right">Amount</th>
+                            <th>HST?</th>
+                            <th>Edit</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in entries %}
+                        <tr>
+                            <td>{{ row.entry_date }}</td>
+                            <td>{{ "Income" if row.is_income==1 else "Expense" }}</td>
+                            <td>{{ row.truck_name or "-" }}</td>
+                            <td>{{ row.driver_name or "-" }}</td>
+                            <td>{{ row.description }}</td>
+                            <td class="right">${{ '%.2f'|format(row.amount) }}</td>
+                            <td>{{ "With" if row.hst_included==1 else "Without" }}</td>
+                            <td>
+                                <a class="btn small" style="text-decoration:none;display:inline-block;" href="{{ url_for('edit_entry', id=row.id) }}">Edit</a>
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('delete_entry', id=row.id) }}" onsubmit="return confirm('Delete?')">
+                                    <input type="password" name="delete_password" placeholder="1322420" style="width:80px;">
+                                    <button class="btn small" type="submit">X</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if entries|length == 0 %}
+                        <tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:20px;">No data available.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div>
+</body>
+</html>

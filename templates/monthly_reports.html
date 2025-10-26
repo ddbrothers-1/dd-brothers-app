@@ -1,28 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monthly Reports - DD Brothers</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="layout">
+    
+    <aside class="sidebar">
+        <div class="logo">
+            DD BROTHERS<br>TRANSPORT
+        </div>
 
-{% extends "base.html" %}
-{% block content %}
-<div class="card">
-  <h1>Monthly Reports</h1>
-  <form method="post" class="grid-3">
-    <div>
-      <label>Truck</label>
-      <select name="truck_id">
-        <option value="all">All Trucks</option>
-        {% for t in trucks %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
-      </select>
-    </div>
-    <div>
-      <label>Month</label>
-      <select name="month">{% for m in range(1,13) %}<option value="{{ m }}">{{ m }}</option>{% endfor %}</select>
-    </div>
-    <div>
-      <label>Year</label>
-      <select name="year">{% for y in range(2022, 2032) %}<option value="{{ y }}">{{ y }}</option>{% endfor %}</select>
-    </div>
-    <div><button class="btn">Generate PDF</button></div>
-  </form>
-  {% if pdf_path %}
-  <a class="btn download" href="{{ url_for('download_report', fname=pdf_path.split('/')[-1]) }}">⬇️ Download Report</a>
-  {% endif %}
+        <a class="navlink" href="{{ url_for('home') }}">Home</a>
+        <a class="navlink" href="{{ url_for('expense_income') }}">Expense / Income</a>
+        <a class="navlink" href="{{ url_for('trucks') }}">Trucks</a>
+        <a class="navlink" href="{{ url_for('drivers') }}">Drivers</a>
+        <a class="navlink" href="{{ url_for('monthly_reports') }}">Monthly Reports</a>
+        <a class="navlink" href="{{ url_for('driver_pay') }}">Driver Pay</a>
+        <a class="navlink" href="{{ url_for('hst') }}">HST</a>
+        <a class="navlink" href="{{ url_for('logout') }}">Logout</a>
+    </aside>
+
+    <main class="main-area">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat,msg in messages %}
+                <div class="flash-msg">{{ msg }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <h2>Download Monthly Report</h2>
+            <form method="POST" class="form-row">
+                <div>
+                    <label>Truck</label>
+                    <select name="truck_id">
+                        <option value="all">All Trucks (split)</option>
+                        {% for t in trucks %}
+                        <option value="{{ t.id }}">{{ t.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Month</label>
+                    <input type="number" min="1" max="12" name="month" placeholder="10" required>
+                </div>
+                <div>
+                    <label>Year</label>
+                    <input type="number" min="2020" max="2100" name="year" placeholder="2025" required>
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                    <button class="btn" type="submit">Generate PDF</button>
+                </div>
+            </form>
+
+            {% if pdf_path %}
+            <div style="margin-top:16px;">
+                <a class="btn" href="{{ url_for('download_report', fname=pdf_path.split('/')[-1]) }}">Download PDF</a>
+            </div>
+            {% endif %}
+        </div>
+
+    </main>
 </div>
-{% endblock %}
+</body>
+</html>

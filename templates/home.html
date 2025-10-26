@@ -1,35 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home - DD Brothers</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="layout">
+    
+    <aside class="sidebar">
+        <div class="logo">
+            DD BROTHERS<br>TRANSPORT
+        </div>
 
-{% extends "base.html" %}
-{% block content %}
-<div class="card">
-  <h1>Profit & Loss Summary</h1>
-  <div class="grid-3">
-    <div><div class="small">Total Income</div><div style="font-size:24px; font-weight:800;">{{ income|currency }}</div></div>
-    <div><div class="small">Total Expenses</div><div style="font-size:24px; font-weight:800;">{{ expense|currency }}</div></div>
-    <div><div class="small">Net</div><div class="{{ 'profit' if profit >= 0 else 'loss' }}" style="font-size:24px;">{{ profit|currency }}</div></div>
-  </div>
+        <a class="navlink" href="{{ url_for('home') }}">Home</a>
+        <a class="navlink" href="{{ url_for('expense_income') }}">Expense / Income</a>
+        <a class="navlink" href="{{ url_for('trucks') }}">Trucks</a>
+        <a class="navlink" href="{{ url_for('drivers') }}">Drivers</a>
+        <a class="navlink" href="{{ url_for('monthly_reports') }}">Monthly Reports</a>
+        <a class="navlink" href="{{ url_for('driver_pay') }}">Driver Pay</a>
+        <a class="navlink" href="{{ url_for('hst') }}">HST</a>
+        <a class="navlink" href="{{ url_for('logout') }}">Logout</a>
+    </aside>
+
+    <main class="main-area">
+        <div class="card">
+            <h2>Profit / Loss Summary</h2>
+            <div class="form-row">
+                <div>
+                    <label>Total Income</label>
+                    <div class="status-profit">{{ income|currency }}</div>
+                </div>
+                <div>
+                    <label>Total Expenses</label>
+                    <div class="status-loss">{{ expense|currency }}</div>
+                </div>
+                <div>
+                    <label>Net</label>
+                    <div class="{% if profit>=0 %}status-profit{% else %}status-loss{% endif %}">{{ profit|currency }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Recent Activity</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Truck</th>
+                            <th>Driver</th>
+                            <th>Description</th>
+                            <th class="right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in recent %}
+                        <tr>
+                            <td>{{ row.entry_date }}</td>
+                            <td>{{ "Income" if row.is_income==1 else "Expense" }}</td>
+                            <td>{{ row.truck_name or "-" }}</td>
+                            <td>{{ row.driver_name or "-" }}</td>
+                            <td>{{ row.description }}</td>
+                            <td class="right">{{ row.amount|currency }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if recent|length == 0 %}
+                        <tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px;">No entries yet.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 </div>
-<div class="card">
-  <h2>Recent Activity</h2>
-  <table class="table">
-    <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Truck</th><th>Driver</th><th>Description</th><th style="text-align:right;">Amount</th></tr></thead>
-    <tbody>
-      {% if recent|length == 0 %}<tr><td colspan="7">No data yet.</td></tr>{% endif %}
-      {% for e in recent %}
-      <tr>
-        <td>{{ e.entry_date }}</td>
-        <td><span class="badge {{ 'income' if e.is_income==1 else 'expense' }}">{{ 'Income' if e.is_income==1 else 'Expense' }}</span></td>
-        <td>{{ e.category }}</td>
-        <td>{{ e.truck_name or '-' }}</td>
-        <td>{{ e.driver_name or '-' }}</td>
-        <td>{{ e.description or '' }}</td>
-        <td style="text-align:right;">
-          {% if e.is_income==1 %}{{ e.amount|currency }}
-          {% else %}{% if e.hst_included==1 %}{{ e.amount|currency }}{% else %}{{ (e.amount*1.13)|round(2)|currency }}{% endif %}{% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% endblock %}
+</body>
+</html>

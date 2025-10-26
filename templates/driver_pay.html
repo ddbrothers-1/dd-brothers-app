@@ -1,56 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Driver Pay - DD Brothers</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="layout">
+    
+    <aside class="sidebar">
+        <div class="logo">
+            DD BROTHERS<br>TRANSPORT
+        </div>
 
-{% extends "base.html" %}
-{% block content %}
-<div class="card">
-  <h1>Driver Pay</h1>
-  <form method="post" class="grid-3">
-    <div>
-      <label>Driver</label>
-      <select name="driver_id">
-        <option value="all">All Drivers</option>
-        {% for d in drivers %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
-      </select>
-    </div>
-    <div>
-      <label>From</label>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input type="date" name="date_from" id="date_from" required onclick="if(this.showPicker){this.showPicker()}" onfocus="if(this.showPicker){this.showPicker()}">
-        <button type="button" class="btn secondary" onclick="openDatePicker('date_from')">📅</button>
-      </div>
-    </div>
-    <div>
-      <label>To</label>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input type="date" name="date_to" id="date_to" required onclick="if(this.showPicker){this.showPicker()}" onfocus="if(this.showPicker){this.showPicker()}">
-        <button type="button" class="btn secondary" onclick="openDatePicker('date_to')">📅</button>
-      </div>
-    </div>
-    <div><button class="btn">Generate</button></div>
-  </form>
+        <a class="navlink" href="{{ url_for('home') }}">Home</a>
+        <a class="navlink" href="{{ url_for('expense_income') }}">Expense / Income</a>
+        <a class="navlink" href="{{ url_for('trucks') }}">Trucks</a>
+        <a class="navlink" href="{{ url_for('drivers') }}">Drivers</a>
+        <a class="navlink" href="{{ url_for('monthly_reports') }}">Monthly Reports</a>
+        <a class="navlink" href="{{ url_for('driver_pay') }}">Driver Pay</a>
+        <a class="navlink" href="{{ url_for('hst') }}">HST</a>
+        <a class="navlink" href="{{ url_for('logout') }}">Logout</a>
+    </aside>
 
-  {% if items %}
-  <h2>Results</h2>
-  <table class="table">
-    <thead><tr><th>Date</th><th>Driver</th><th>Truck</th><th style="text-align:right;">Amount</th></tr></thead>
-    <tbody>
-      {% set total = 0 %}
-      {% for r in items %}
-        {% set amt = r.amount if r.hst_included==1 else (r.amount*1.13) %}
-        {% set total = total + amt %}
-        <tr>
-          <td>{{ r.entry_date }}</td>
-          <td>{{ r.driver_name or '-' }}</td>
-          <td>{{ r.truck_name or '-' }}</td>
-          <td style="text-align:right;">{{ amt|round(2)|currency }}</td>
-        </tr>
-      {% endfor %}
-      <tr>
-        <td colspan="3" style="text-align:right;"><strong>Total</strong></td>
-        <td style="text-align:right;"><strong>{{ total|round(2)|currency }}</strong></td>
-      </tr>
-    </tbody>
-  </table>
-  <a class="btn download" href="{{ url_for('download_report', fname=pdf_path.split('/')[-1]) }}">⬇️ Download PDF</a>
-  {% endif %}
+    <main class="main-area">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat,msg in messages %}
+                <div class="flash-msg">{{ msg }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <h2>Driver Pay Report</h2>
+            <form method="POST" class="form-row">
+                <div>
+                    <label>Driver</label>
+                    <select name="driver_id">
+                        <option value="all">All Drivers</option>
+                        {% for d in drivers %}
+                        <option value="{{ d.id }}">{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>From Date</label>
+                    <input type="date" name="date_from" required>
+                </div>
+                <div>
+                    <label>To Date</label>
+                    <input type="date" name="date_to" required>
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                    <button class="btn" type="submit">Generate</button>
+                </div>
+            </form>
+
+            {% if pdf_path %}
+            <div style="margin-top:16px;">
+                <a class="btn" href="{{ url_for('download_report', fname=pdf_path.split('/')[-1]) }}">Download PDF</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2>Driver Pay Items</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Driver</th>
+                            <th>Truck</th>
+                            <th class="right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in items %}
+                        <tr>
+                            <td>{{ row.entry_date }}</td>
+                            <td>{{ row.driver_name or "-" }}</td>
+                            <td>{{ row.truck_name or "-" }}</td>
+                            <td class="right">${{ '%.2f'|format(row.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if items|length == 0 %}
+                        <tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:20px;">No data available.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
 </div>
-{% endblock %}
+</body>
+</html>
