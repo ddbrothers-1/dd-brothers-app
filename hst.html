@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HST Report - DD Brothers</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f5f6fa;
+        }
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 220px;
+            background: linear-gradient(#003b8e, #001e4a);
+            color: #fff;
+            padding: 20px;
+        }
+        .sidebar .logo {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        .navlink {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            background-color: rgba(255,255,255,0.07);
+            font-size: 14px;
+        }
+        .navlink.active {
+            background-color: #fff;
+            color: #001e4a;
+            font-weight: 600;
+        }
+
+        .main-area {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.07);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        h2 {
+            margin: 0 0 4px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #001e4a;
+        }
+
+        .subtext {
+            margin: 0 0 16px 0;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .table-wrapper {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead th {
+            background: #001e4a;
+            color: #fff;
+            text-align: left;
+            padding: 10px;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        tbody td {
+            background: #fff;
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+            color: #1f2937;
+            font-size: 13px;
+        }
+
+        tfoot td {
+            background: #f0f9ff;
+            font-weight: 600;
+            font-size: 14px;
+            border-top: 2px solid #001e4a;
+            padding: 12px 10px;
+            color: #001e4a;
+        }
+
+        .right {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .table-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #9ca3af;
+            padding: 24px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            DD BROTHERS<br>TRANSPORT
+        </div>
+
+        <a class="navlink" href="{{ url_for('home') }}">Home</a>
+        <a class="navlink" href="{{ url_for('expense_income') }}">Expense / Income</a>
+        <a class="navlink" href="{{ url_for('trucks') }}">Trucks</a>
+        <a class="navlink" href="{{ url_for('drivers') }}">Drivers</a>
+        <a class="navlink" href="{{ url_for('monthly_reports') }}">Monthly Reports</a>
+        <a class="navlink" href="{{ url_for('driver_pay') }}">Driver Pay</a>
+        <a class="navlink active" href="{{ url_for('hst') }}">HST</a>
+        <a class="navlink" href="{{ url_for('logout') }}">Logout</a>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-area">
+        <div class="card">
+            <h2>HST Report</h2>
+            <p class="subtext">Only “With HST” expenses. HST is calculated as 13% inside amount, not changing your saved entry.</p>
+
+            <div class="table-wrapper">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Truck</th>
+                                <th>Driver</th>
+                                <th>Description</th>
+                                <th class="right">Amount (With HST)</th>
+                                <th class="right">HST (13%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                            <tr>
+                                <td>{{ row.date }}</td>
+                                <td>{{ row.truck }}</td>
+                                <td>{{ row.driver }}</td>
+                                <td>{{ row.desc }}</td>
+                                <td class="right">${{ "%.2f"|format(row.amount_with_hst) }}</td>
+                                <td class="right">${{ "%.2f"|format(row.hst_only) }}</td>
+                            </tr>
+                            {% endfor %}
+
+                            {% if rows|length == 0 %}
+                            <tr>
+                                <td colspan="6" class="no-data">
+                                    No HST entries yet.
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="right">HST Grand Total:</td>
+                                <td class="right">${{ "%.2f"|format(total_hst) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+</body>
+</html>
