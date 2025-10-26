@@ -1,55 +1,60 @@
-<!doctype html>
-<html lang="en">
+
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8">
-  <title>{{ title }}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="utf-8"/>
+    <title>{{ title or "DD Brothers — Transport Manager" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+{% if not no_layout %}
 <div class="layout">
-  <aside class="sidebar">
-    <div class="logo-block">
-      <img src="{{ url_for('static','dd_logo.png') }}" class="logo-img" alt="DD Brothers Logo">
-      <div class="brand-text">
-        <div class="brand-line1">DD BROTHERS</div>
-        <div class="brand-line2">TRANSPORT</div>
-      </div>
-    </div>
+    <div class="sidebar">
+        <div class="logo-block">
+            <img src="{{ url_for('static', filename='dd_logo.png') }}" alt="DD">
+            <div>
+                <div>DD BROTHERS</div>
+                <div>TRANSPORT</div>
+            </div>
+        </div>
 
-    <div class="side-section">
-      <div class="side-user">
-        {% if session.get('logged_in') %}
-          Logged in as:<br>DD brothers
+        <a class="nav" href="{{ url_for('home') }}">Home</a>
+        <a class="nav" href="{{ url_for('expense_income') }}">Expense / Income</a>
+        <a class="nav" href="{{ url_for('trucks') }}">Trucks</a>
+        <a class="nav" href="{{ url_for('drivers') }}">Drivers</a>
+        <a class="nav" href="{{ url_for('monthly_reports') }}">Monthly Reports</a>
+        <a class="nav" href="{{ url_for('driver_pay') }}">Driver Pay</a>
+        <a class="nav" href="{{ url_for('hst_page') }}">HST</a>
+        <a class="nav" href="{{ url_for('logout') }}">Logout</a>
+
+        <div class="footer">
+            {% if session.get('logged_in') %}
+            Logged in as:<br>{{ LOGIN_USER }}<br><br>
+            {% endif %}
+            Server: 127.0.0.1:5000
+        </div>
+    </div>
+    <div class="main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat,msg in messages %}
+            <div class="alert alert-{{cat}}">{{ msg }}</div>
+          {% endfor %}
         {% endif %}
-      </div>
-      <ul class="nav-list">
-        <li><a href="{{ url_for('home') }}">Home</a></li>
-        <li><a href="{{ url_for('expense_income') }}">Expense / Income</a></li>
-        <li><a href="{{ url_for('trucks') }}">Trucks</a></li>
-        <li><a href="{{ url_for('drivers') }}">Drivers</a></li>
-        <li><a href="{{ url_for('monthly_reports') }}">Monthly Reports</a></li>
-        <li><a href="{{ url_for('driver_pay') }}">Driver Pay</a></li>
-        <li><a href="{{ url_for('hst') }}">HST</a></li>
-        <li><a href="{{ url_for('logout') }}">Logout</a></li>
-      </ul>
+        {% endwith %}
 
-      <div class="server-info">
-        Server: 127.0.0.1:5000
-      </div>
+        {% block content %}{% endblock %}
     </div>
-  </aside>
-
-  <main class="content">
+</div>
+{% else %}
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for cat,msg in messages %}
-        <div class="flash flash-{{cat}}">{{ msg }}</div>
+        <div class="alert alert-{{cat}}">{{ msg }}</div>
       {% endfor %}
     {% endif %}
     {% endwith %}
-
     {% block content %}{% endblock %}
-  </main>
-</div>
+{% endif %}
 </body>
 </html>

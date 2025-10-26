@@ -1,33 +1,24 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Login - DD Brothers</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body class="login-body">
-  <div class="login-card">
-    <h2>DD Brothers Login</h2>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for cat,msg in messages %}
-        <div class="flash flash-{{cat}}">{{ msg }}</div>
-      {% endfor %}
-    {% endif %}
-    {% endwith %}
+
+{% extends "base.html" %}
+{% set no_layout = True %}
+{% block content %}
+<div class="login-wrap">
+    <div class="brand-head">
+        <img src="{{ url_for('static', filename='dd_logo.png') }}" alt="DD">
+        <div class="brand-lines">
+            <div>DD BROTHERS TRANSPORT</div>
+            <div>Secure Login</div>
+        </div>
+    </div>
+
     <form method="post">
-      <div>
         <label>Username</label>
-        <input type="text" name="username" value="{{login_user}}" readonly class="readonly-field">
-      </div>
-      <div>
-        <label>Password</label>
-        <input type="password" name="password" required placeholder="********">
-      </div>
-      <div>
-        <button class="btn-primary" type="submit">Login</button>
-      </div>
+        <input type="text" name="username" value="DD brothers" readonly>
+
+        <label style="margin-top:12px;">Password</label>
+        <input type="password" name="password" placeholder="Password">
+
+        <button class="btn" style="margin-top:16px;width:100%;">Login</button>
     </form>
-  </div>
-</body>
-</html>
+</div>
+{% endblock %}
